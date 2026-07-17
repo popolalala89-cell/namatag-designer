@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useVibe } from '../hooks/useVibe'
 
 export default function Sidebar({
@@ -7,6 +8,7 @@ export default function Sidebar({
   onPhotoUpload, onRemovePhoto, hasPhoto,
 }) {
   const { vibe } = useVibe()
+  const [open, setOpen] = useState(false)
 
   const handleTextChange = (key, value) => {
     setTexts((prev) => ({ ...prev, [key]: value }))
@@ -30,9 +32,9 @@ export default function Sidebar({
 
   const textFields = Object.keys(texts)
 
-  return (
+  const panel = (
     <div
-      className="w-72 h-full overflow-y-auto p-4 space-y-4 shrink-0 border-r vibe-transition"
+      className="h-full overflow-y-auto p-4 space-y-4 shrink-0 sidebar-panel"
       style={{
         background: vibe.colors.sidebarBg,
         borderColor: vibe.colors.sidebarBorder,
@@ -166,6 +168,40 @@ export default function Sidebar({
         </Section>
       )}
     </div>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden md:block w-72 border-r vibe-transition" style={{ borderColor: vibe.colors.sidebarBorder }}>
+        {panel}
+      </div>
+
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="md:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-xl"
+        style={{ background: vibe.colors.gradient, color: '#fff', boxShadow: vibe.colors.glow }}
+      >
+        {open ? '✕' : '⚙️'}
+      </button>
+
+      {/* Mobile sidebar overlay */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 z-30"
+          onClick={() => setOpen(false)}
+          style={{ background: 'rgba(0,0,0,0.4)' }}
+        >
+          <div
+            className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {panel}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

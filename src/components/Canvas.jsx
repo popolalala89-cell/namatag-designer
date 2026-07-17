@@ -5,16 +5,25 @@ export default function Canvas({ canvasElRef, canvasWidth, canvasHeight }) {
   const containerRef = useRef(null)
   const { vibe } = useVibe()
 
+  // Responsive canvas sizing
   useEffect(() => {
-    if (containerRef.current && canvasElRef.current) {
-      const container = containerRef.current
-      const canvas = canvasElRef.current
-      // Make canvas responsive
-      const maxW = Math.min(container.clientWidth, 500)
-      const scale = maxW / canvasWidth
+    const container = containerRef.current
+    const canvas = canvasElRef.current
+    if (!container || !canvas) return
+
+    const resizeCanvas = () => {
+      const maxW = Math.min(container.clientWidth || 300, 500)
+      const maxH = (container.clientHeight || 300) * 0.7
+      const scale = Math.min(maxW / canvasWidth, maxH / canvasHeight, 1)
       canvas.style.width = `${canvasWidth * scale}px`
       canvas.style.height = `${canvasHeight * scale}px`
     }
+
+    resizeCanvas()
+
+    // Also resize on window resize
+    window.addEventListener('resize', resizeCanvas)
+    return () => window.removeEventListener('resize', resizeCanvas)
   }, [canvasWidth, canvasHeight, canvasElRef])
 
   return (
