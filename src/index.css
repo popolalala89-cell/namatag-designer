@@ -1,25 +1,154 @@
 @import "tailwindcss";
 
-/* Toast animation */
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* ====== VIBE SYSTEM (CSS Custom Properties) ====== */
+:root {
+  --vibe-primary: #2563eb;
+  --vibe-primary-light: #3b82f6;
+  --vibe-secondary: #1e40af;
+  --vibe-accent: #f59e0b;
+  --vibe-bg: #f1f5f9;
+  --vibe-sidebar-bg: rgba(255,255,255,0.95);
+  --vibe-sidebar-border: #e2e8f0;
+  --vibe-card-bg: #ffffff;
+  --vibe-text: #1e293b;
+  --vibe-text-muted: #64748b;
+  --vibe-canvas-bg: #e2e8f0;
+  --vibe-glass-bg: rgba(255,255,255,0.7);
+  --vibe-glass-border: rgba(255,255,255,0.3);
+  --vibe-gradient: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  --vibe-glow: 0 0 20px rgba(37,99,235,0.15);
+  --vibe-pattern: none;
+
+  transition: background-color 0.5s ease, color 0.3s ease;
 }
 
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
-
-/* Prevent body scroll */
+/* ====== BASE ====== */
 html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
   overflow: hidden;
+}
+
+body {
+  background: var(--vibe-bg);
+  color: var(--vibe-text);
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: background 0.5s ease, color 0.3s ease;
+}
+
+/* ====== SCROLLBAR STYLING ====== */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vibe-text-muted);
+  border-radius: 99px;
+}
+
+/* ====== ANIMATIONS ====== */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
+.animate-fade-in { animation: fade-in 0.4s ease-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+/* ====== GLASSMORPHISM ====== */
+.glass {
+  background: var(--vibe-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--vibe-glass-border);
+}
+
+/* ====== VIBE TRANSITIONS ====== */
+.vibe-transition {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ====== CANVAS CONTAINER ====== */
+.canvas-container {
+  background-image: var(--vibe-pattern);
+}
+
+/* ====== BUTTON BASE ====== */
+.btn-vibe {
+  background: var(--vibe-gradient);
+  color: white;
+  box-shadow: var(--vibe-glow);
+  transition: all 0.3s ease;
+}
+.btn-vibe:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--vibe-glow), 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn-vibe:active {
+  transform: translateY(0);
+}
+
+/* ====== INPUT/STYLING ====== */
+.input-vibe {
+  border-color: var(--vibe-sidebar-border);
+  background: var(--vibe-card-bg);
+  color: var(--vibe-text);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.input-vibe:focus {
+  outline: none;
+  border-color: var(--vibe-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vibe-primary) 20%, transparent);
+}
+
+/* ====== SELECT VIBE ====== */
+.select-vibe {
+  border-color: var(--vibe-sidebar-border);
+  background: var(--vibe-card-bg);
+  color: var(--vibe-text);
+  transition: border-color 0.3s ease;
+}
+.select-vibe:focus {
+  outline: none;
+  border-color: var(--vibe-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vibe-primary) 20%, transparent);
+}
+
+/* ====== TEMPLATE BUTTON ====== */
+.template-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.template-btn:hover {
+  transform: translateY(-1px);
+}
+.template-btn-active {
+  background: var(--vibe-gradient) !important;
+  color: white !important;
+  box-shadow: var(--vibe-glow);
 }

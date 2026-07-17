@@ -2,16 +2,18 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import templates from './utils/templates'
 import { exportPNG, exportPDF } from './utils/export'
 import useFabricCanvas from './hooks/useFabricCanvas'
+import { useVibe } from './hooks/useVibe'
 import Canvas from './components/Canvas'
 import Sidebar from './components/Sidebar'
 import Toolbar from './components/Toolbar'
-import TemplatePicker from './components/TemplatePicker'
+import VibePicker from './components/VibePicker'
 
 export default function App() {
   const canvasElRef = useRef(null)
+  const { vibe } = useVibe()
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [texts, setTexts] = useState({})
-  const [fontFamily, setFontFamily] = useState('Arial')
+  const [fontFamily, setFontFamily] = useState('Inter')
   const [textColor, setTextColor] = useState('#000000')
   const [bgColor, setBgColor] = useState('#ffffff')
   const [borderColor, setBorderColor] = useState('#cccccc')
@@ -135,7 +137,7 @@ export default function App() {
     const fabricCanvas = canvasRef.current
     const dataURL = fabricCanvas.toDataURL({ multiplier: 2, format: 'png' })
 
-    // Bikin nomor WA (ganti dengan nomor lo)
+    // Bikin nomor WA
     const waNumber = '6281993295352'
     const message = encodeURIComponent(
       `Halo! Saya mau order cetak nametag:\n\n` +
@@ -149,10 +151,15 @@ export default function App() {
   }, [canvasRef, selectedTemplate, texts, showToast])
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div
+      className="h-screen w-screen flex flex-col overflow-hidden vibe-transition"
+      style={{ background: vibe.colors.bg, color: vibe.colors.text }}
+    >
       {/* Toast notification */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-slide-in">
+        <div className="fixed top-4 right-4 z-50 px-4 py-2 rounded-xl shadow-lg text-sm animate-slide-in glass"
+          style={{ color: vibe.colors.text }}
+        >
           {toast}
         </div>
       )}
@@ -186,17 +193,34 @@ export default function App() {
 
         {/* Template picker + Canvas */}
         <div className="flex-1 flex flex-col">
-          <div className="px-4 pt-3 pb-1 bg-white border-b border-gray-200">
+          {/* Vibe Picker */}
+          <VibePicker />
+
+          {/* Template Picker */}
+          <div
+            className="px-4 pt-3 pb-1 border-b vibe-transition"
+            style={{
+              background: vibe.colors.sidebarBg,
+              borderColor: vibe.colors.sidebarBorder,
+            }}
+          >
             <div className="flex gap-2 overflow-x-auto">
               {templates.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => handleSelectTemplate(t)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                    selectedTemplate?.id === t.id
-                      ? 'bg-blue-500 text-white shadow'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all template-btn ${
+                    selectedTemplate?.id === t.id ? 'template-btn-active' : ''
                   }`}
+                  style={
+                    selectedTemplate?.id === t.id
+                      ? {}
+                      : {
+                          background: vibe.colors.cardBg,
+                          color: vibe.colors.textMuted,
+                          border: `1px solid ${vibe.colors.sidebarBorder}`,
+                        }
+                  }
                 >
                   {t.name}
                 </button>
@@ -212,9 +236,16 @@ export default function App() {
         </div>
       </div>
 
-      {/* Footer watermark branding */}
-      <div className="text-center text-[10px] text-gray-400 py-1 bg-white border-t border-gray-200">
-        namatag.design — desain sendiri, download, atau pesan cetak
+      {/* Footer branding */}
+      <div
+        className="text-center text-[10px] py-1 border-t vibe-transition"
+        style={{
+          background: vibe.colors.sidebarBg,
+          borderColor: vibe.colors.sidebarBorder,
+          color: vibe.colors.textMuted,
+        }}
+      >
+        namatag.design — {vibe.emoji} desain sendiri, download, atau pesan cetak
       </div>
     </div>
   )

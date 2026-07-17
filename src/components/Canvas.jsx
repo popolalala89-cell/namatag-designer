@@ -1,7 +1,9 @@
 import { useRef, useEffect } from 'react'
+import { useVibe } from '../hooks/useVibe'
 
 export default function Canvas({ canvasElRef, canvasWidth, canvasHeight }) {
   const containerRef = useRef(null)
+  const { vibe } = useVibe()
 
   useEffect(() => {
     if (containerRef.current && canvasElRef.current) {
@@ -18,9 +20,13 @@ export default function Canvas({ canvasElRef, canvasWidth, canvasHeight }) {
   return (
     <div
       ref={containerRef}
-      className="flex-1 flex items-center justify-center bg-gray-100 p-4 overflow-auto"
+      className="flex-1 flex items-center justify-center p-4 overflow-auto vibe-transition canvas-container"
+      style={{ background: vibe.colors.canvasBg }}
     >
-      <div className="shadow-lg bg-white rounded-sm">
+      <div
+        className="shadow-lg rounded-sm"
+        style={{ boxShadow: vibe.colors.glow }}
+      >
         <canvas
           ref={canvasElRef}
           id="namatag-canvas"

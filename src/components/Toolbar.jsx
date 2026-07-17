@@ -1,53 +1,84 @@
-export default function Toolbar({
-  onExportPNG,
-  onExportPDF,
-  onOrderWA,
-  onReset,
-}) {
-  const buttonClass =
-    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all'
+import { useVibe } from '../hooks/useVibe'
+
+export default function Toolbar({ onExportPNG, onExportPDF, onOrderWA, onReset }) {
+  const { vibe } = useVibe()
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-bold text-gray-700">
-          🏷️ Namatag Designer
-        </span>
+    <div
+      className="flex items-center justify-between px-4 py-2 border-b shrink-0 vibe-transition"
+      style={{
+        background: vibe.colors.sidebarBg,
+        borderColor: vibe.colors.sidebarBorder,
+      }}
+    >
+      {/* Brand */}
+      <div className="flex items-center gap-2.5">
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
+          style={{ background: vibe.colors.gradient }}
+        >
+          🏷️
+        </div>
+        <div>
+          <span className="text-sm font-bold" style={{ color: vibe.colors.text }}>
+            Namatag Designer
+          </span>
+          <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded-full" style={{ background: vibe.colors.primary + '20', color: vibe.colors.primary }}>
+            {vibe.emoji} {vibe.name}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onReset}
-          className={`${buttonClass} text-gray-600 hover:bg-gray-100`}
-          title="Reset canvas"
-        >
-          🔄 Reset
-        </button>
+      {/* Actions */}
+      <div className="flex items-center gap-1.5">
+        <ActionButton onClick={onReset} vibe={vibe} emoji="🔄" label="Reset" />
 
-        <button
+        <ActionButton
           onClick={onExportPNG}
-          className={`${buttonClass} bg-blue-500 text-white hover:bg-blue-600`}
-          title="Download PNG"
-        >
-          ⬇ PNG
-        </button>
+          vibe={vibe}
+          emoji="⬇"
+          label="PNG"
+          primary
+        />
 
-        <button
+        <ActionButton
           onClick={onExportPDF}
-          className={`${buttonClass} bg-green-500 text-white hover:bg-green-600`}
-          title="Download PDF siap cetak"
-        >
-          ⬇ PDF
-        </button>
+          vibe={vibe}
+          emoji="⬇"
+          label="PDF"
+          primary
+        />
 
         <button
           onClick={onOrderWA}
-          className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}
-          title="Pesan cetak via WhatsApp"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+          style={{
+            background: '#25D366',
+            color: 'white',
+            boxShadow: '0 2px 8px rgba(37,211,102,0.3)',
+          }}
         >
-          📱 Pesan Cetak
+          <span>📱</span>
+          <span>Pesan Cetak</span>
         </button>
       </div>
     </div>
+  )
+}
+
+function ActionButton({ onClick, vibe, emoji, label, primary }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
+      style={
+        primary
+          ? { background: vibe.colors.gradient, color: 'white', boxShadow: vibe.colors.glow }
+          : { background: vibe.colors.cardBg, color: vibe.colors.textMuted, border: `1px solid ${vibe.colors.sidebarBorder}` }
+      }
+    >
+      <span>{emoji}</span>
+      <span>{label}</span>
+    </button>
   )
 }
