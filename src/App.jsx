@@ -1,0 +1,221 @@
+import { useState, useRef, useEffect, useCallback } from 'react'
+import templates from './utils/templates'
+import { exportPNG, exportPDF } from './utils/export'
+import useFabricCanvas from './hooks/useFabricCanvas'
+import Canvas from './components/Canvas'
+import Sidebar from './components/Sidebar'
+import Toolbar from './components/Toolbar'
+import TemplatePicker from './components/TemplatePicker'
+
+export default function App() {
+  const canvasElRef = useRef(null)
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [texts, setTexts] = useState({})
+  const [fontFamily, setFontFamily] = useState('Arial')
+  const [textColor, setTextColor] = useState('#000000')
+  const [bgColor, setBgColor] = useState('#ffffff')
+  const [borderColor, setBorderColor] = useState('#cccccc')
+  const [hasLogo, setHasLogo] = useState(false)
+  const [logoUrl, setLogoUrl] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  // Toaster
+  const showToast = useCallback((msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
+  }, [])
+
+  const {
+    loadTemplate,
+    updateText,
+    updateFontFamily,
+    updateTextColor,
+    updateBgColor,
+    updateBorderColor,
+    addLogo,
+    removeLogo,
+    canvasRef,
+  } = useFabricCanvas(canvasElRef)
+
+  // Load template on select
+  const handleSelectTemplate = useCallback(
+    (t) => {
+      setSelectedTemplate(t)
+      loadTemplate(t)
+      // Reset states sesuai template
+      const initialTexts = {}
+      t.defaultTexts.forEach((dt) => {
+        initialTexts[dt.key] = dt.value
+      })
+      setTexts(initialTexts)
+      setBgColor(t.defaultBg)
+      setBorderColor(t.defaultBorder || '#cccccc')
+      // Reset textColor from first text object
+      if (t.defaultTexts.length > 0) {
+        setTextColor(t.defaultTexts[0].fill)
+      }
+      setHasLogo(false)
+      setLogoUrl(null)
+    },
+    [loadTemplate]
+  )
+
+  // Sync text changes to canvas
+  useEffect(() => {
+    if (!selectedTemplate) return
+    Object.entries(texts).forEach(([key, value]) => {
+      updateText(key, value)
+    })
+  }, [texts, selectedTemplate, updateText])
+
+  // Sync font family
+  useEffect(() => {
+    if (!selectedTemplate) return
+    updateFontFamily(fontFamily)
+  }, [fontFamily, selectedTemplate, updateFontFamily])
+
+  // Sync text color
+  useEffect(() => {
+    if (!selectedTemplate) return
+    updateTextColor(textColor)
+  }, [textColor, selectedTemplate, updateTextColor])
+
+  // Sync bg color
+  useEffect(() => {
+    if (!selectedTemplate) return
+    updateBgColor(bgColor)
+  }, [bgColor, selectedTemplate, updateBgColor])
+
+  // Sync border color
+  useEffect(() => {
+    if (!selectedTemplate) return
+    updateBorderColor(borderColor)
+  }, [borderColor, selectedTemplate, updateBorderColor])
+
+  // Handle logo upload
+  const handleLogoUpload = useCallback(
+    (url) => {
+      setLogoUrl(url)
+      setHasLogo(true)
+      addLogo(url)
+    },
+    [addLogo]
+  )
+
+  const handleRemoveLogo = useCallback(() => {
+    setHasLogo(false)
+    setLogoUrl(null)
+    removeLogo()
+  }, [removeLogo])
+
+  // Export handlers
+  const handleExportPNG = useCallback(() => {
+    if (!canvasRef.current) return
+    exportPNG(canvasRef.current, 'namatag.png')
+    showToast('✅ PNG berhasil di-download!')
+  }, [canvasRef, showToast])
+
+  const handleExportPDF = useCallback(() => {
+    if (!canvasRef.current) return
+    exportPDF(canvasRef.current, 'namatag.pdf')
+    showToast('✅ PDF berhasil di-download!')
+  }, [canvasRef, showToast])
+
+  const handleReset = useCallback(() => {
+    if (selectedTemplate) {
+      handleSelectTemplate(selectedTemplate)
+      showToast('🔄 Canvas di-reset')
+    }
+  }, [selectedTemplate, handleSelectTemplate, showToast])
+
+  const handleOrderWA = useCallback(() => {
+    if (!canvasRef.current || !selectedTemplate) return
+
+    // Capture canvas as blob
+    const fabricCanvas = canvasRef.current
+    const dataURL = fabricCanvas.toDataURL({ multiplier: 2, format: 'png' })
+
+    // Bikin nomor WA (ganti dengan nomor lo)
+    const waNumber = '6281993295352'
+    const message = encodeURIComponent(
+      `Halo! Saya mau order cetak nametag:\n\n` +
+      `Template: ${selectedTemplate.name}\n` +
+      `Teks: ${Object.entries(texts).map(([k, v]) => `${k}: ${v}`).join(', ')}\n` +
+      `\nMohon info harga dan estimasi ya.`
+    )
+
+    window.open(`https://wa.me/${waNumber}?text=${message}`, '_blank')
+    showToast('📱 Order via WhatsApp!')
+  }, [canvasRef, selectedTemplate, texts, showToast])
+
+  return (
+    <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-slide-in">
+          {toast}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <Toolbar
+        onExportPNG={handleExportPNG}
+        onExportPDF={handleExportPDF}
+        onOrderWA={handleOrderWA}
+        onReset={handleReset}
+      />
+
+      {/* Main area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar
+          texts={texts}
+          setTexts={setTexts}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          textColor={textColor}
+          setTextColor={setTextColor}
+          bgColor={bgColor}
+          setBgColor={setBgColor}
+          borderColor={borderColor}
+          setBorderColor={setBorderColor}
+          onLogoUpload={handleLogoUpload}
+          onRemoveLogo={handleRemoveLogo}
+          hasLogo={hasLogo}
+        />
+
+        {/* Template picker + Canvas */}
+        <div className="flex-1 flex flex-col">
+          <div className="px-4 pt-3 pb-1 bg-white border-b border-gray-200">
+            <div className="flex gap-2 overflow-x-auto">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => handleSelectTemplate(t)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedTemplate?.id === t.id
+                      ? 'bg-blue-500 text-white shadow'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Canvas
+            canvasElRef={canvasElRef}
+            canvasWidth={selectedTemplate?.width || 400}
+            canvasHeight={selectedTemplate?.height || 250}
+          />
+        </div>
+      </div>
+
+      {/* Footer watermark branding */}
+      <div className="text-center text-[10px] text-gray-400 py-1 bg-white border-t border-gray-200">
+        namatag.design — desain sendiri, download, atau pesan cetak
+      </div>
+    </div>
+  )
+}
