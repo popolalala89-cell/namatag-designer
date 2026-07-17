@@ -1,9 +1,10 @@
 import { useVibe } from '../hooks/useVibe'
 
 export default function Sidebar({
-  texts, setTexts, fontFamily, setFontFamily,
+  template, texts, setTexts, fontFamily, setFontFamily,
   textColor, setTextColor, bgColor, setBgColor,
   borderColor, setBorderColor, onLogoUpload, onRemoveLogo, hasLogo,
+  onPhotoUpload, onRemovePhoto, hasPhoto,
 }) {
   const { vibe } = useVibe()
 
@@ -16,6 +17,14 @@ export default function Sidebar({
     if (file) {
       const url = URL.createObjectURL(file)
       onLogoUpload(url)
+    }
+  }
+
+  const handlePhotoFile = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const url = URL.createObjectURL(file)
+      onPhotoUpload(url)
     }
   }
 
@@ -62,6 +71,37 @@ export default function Sidebar({
           <p className="text-sm font-medium">Pilih template dulu!</p>
           <p className="text-[11px] mt-1">Klik template di atas untuk mulai desain</p>
         </div>
+      )}
+
+      {/* Section: Foto Diri (only for photo templates) */}
+      {template?.hasPhoto && (
+        <Section label="📸 Foto Diri" vibe={vibe}>
+          <label
+            className="flex items-center justify-center w-full px-3 py-4 border-2 border-dashed rounded-xl cursor-pointer text-sm transition-all hover:scale-[1.02]"
+            style={{
+              borderColor: hasPhoto ? vibe.colors.primary : vibe.colors.sidebarBorder,
+              background: hasPhoto ? vibe.colors.primary + '10' : vibe.colors.cardBg,
+              color: hasPhoto ? vibe.colors.primary : vibe.colors.textMuted,
+            }}
+          >
+            <span className="flex items-center gap-1.5">
+              {hasPhoto ? '🔄 Ganti Foto' : '➕ Upload Foto'}
+            </span>
+            <input type="file" accept="image/*" onChange={handlePhotoFile} className="hidden" />
+          </label>
+          {hasPhoto && (
+            <button
+              onClick={onRemovePhoto}
+              className="mt-1.5 text-xs font-medium transition-all hover:scale-105"
+              style={{ color: vibe.colors.accent }}
+            >
+              ✖ Hapus foto
+            </button>
+          )}
+          <p className="text-[10px] mt-1.5" style={{ color: vibe.colors.textMuted }}>
+            Foto akan muncul di area yang tersedia. Format lingkaran atau rounded.
+          </p>
+        </Section>
       )}
 
       {/* Section: Font */}

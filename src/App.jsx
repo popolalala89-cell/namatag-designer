@@ -19,6 +19,8 @@ export default function App() {
   const [borderColor, setBorderColor] = useState('#cccccc')
   const [hasLogo, setHasLogo] = useState(false)
   const [logoUrl, setLogoUrl] = useState(null)
+  const [hasPhoto, setHasPhoto] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState(null)
   const [toast, setToast] = useState(null)
 
   // Toaster
@@ -36,6 +38,8 @@ export default function App() {
     updateBorderColor,
     addLogo,
     removeLogo,
+    addPhoto,
+    removePhoto,
     canvasRef,
   } = useFabricCanvas(canvasElRef)
 
@@ -52,12 +56,13 @@ export default function App() {
       setTexts(initialTexts)
       setBgColor(t.defaultBg)
       setBorderColor(t.defaultBorder || '#cccccc')
-      // Reset textColor from first text object
       if (t.defaultTexts.length > 0) {
         setTextColor(t.defaultTexts[0].fill)
       }
       setHasLogo(false)
       setLogoUrl(null)
+      setHasPhoto(false)
+      setPhotoUrl(null)
     },
     [loadTemplate]
   )
@@ -110,6 +115,27 @@ export default function App() {
     removeLogo()
   }, [removeLogo])
 
+  // Handle photo upload
+  const handlePhotoUpload = useCallback(
+    (url) => {
+      // Remove old photo first
+      if (hasPhoto && photoUrl) {
+        URL.revokeObjectURL(photoUrl)
+      }
+      setPhotoUrl(url)
+      setHasPhoto(true)
+      addPhoto(url)
+    },
+    [addPhoto, hasPhoto, photoUrl]
+  )
+
+  const handleRemovePhoto = useCallback(() => {
+    setHasPhoto(false)
+    if (photoUrl) URL.revokeObjectURL(photoUrl)
+    setPhotoUrl(null)
+    removePhoto()
+  }, [removePhoto, photoUrl])
+
   // Export handlers
   const handleExportPNG = useCallback(() => {
     if (!canvasRef.current) return
@@ -133,15 +159,14 @@ export default function App() {
   const handleOrderWA = useCallback(() => {
     if (!canvasRef.current || !selectedTemplate) return
 
-    // Capture canvas as blob
     const fabricCanvas = canvasRef.current
     const dataURL = fabricCanvas.toDataURL({ multiplier: 2, format: 'png' })
 
-    // Bikin nomor WA
     const waNumber = '6281993295352'
     const message = encodeURIComponent(
       `Halo! Saya mau order cetak nametag:\n\n` +
       `Template: ${selectedTemplate.name}\n` +
+      `Ukuran: ${selectedTemplate.width}×${selectedTemplate.height}\n` +
       `Teks: ${Object.entries(texts).map(([k, v]) => `${k}: ${v}`).join(', ')}\n` +
       `\nMohon info harga dan estimasi ya.`
     )
@@ -176,6 +201,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar
+          template={selectedTemplate}
           texts={texts}
           setTexts={setTexts}
           fontFamily={fontFamily}
@@ -189,6 +215,9 @@ export default function App() {
           onLogoUpload={handleLogoUpload}
           onRemoveLogo={handleRemoveLogo}
           hasLogo={hasLogo}
+          onPhotoUpload={handlePhotoUpload}
+          onRemovePhoto={handleRemovePhoto}
+          hasPhoto={hasPhoto}
         />
 
         {/* Template picker + Canvas */}
@@ -222,7 +251,7 @@ export default function App() {
                         }
                   }
                 >
-                  {t.name}
+                  {t.emoji || ''} {t.name}
                 </button>
               ))}
             </div>
@@ -230,8 +259,8 @@ export default function App() {
 
           <Canvas
             canvasElRef={canvasElRef}
-            canvasWidth={selectedTemplate?.width || 400}
-            canvasHeight={selectedTemplate?.height || 250}
+            canvasWidth={selectedTemplate?.width || 500}
+            canvasHeight={selectedTemplate?.height || 320}
           />
         </div>
       </div>
