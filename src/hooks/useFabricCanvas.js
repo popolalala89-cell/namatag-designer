@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { Canvas, Rect, Textbox, FabricImage, Circle, Ellipse } from 'fabric'
+import { Canvas, Rect, Textbox, FabricImage, Circle } from 'fabric'
 
 export default function useFabricCanvas(canvasElRef) {
   const canvasRef = useRef(null)
@@ -264,7 +264,7 @@ export default function useFabricCanvas(canvasElRef) {
     }
   }, [])
 
-  // Add photo (with shape clipping)
+  // Add photo — pre-render clipped to offscreen canvas, then create FabricImage
   const addPhoto = useCallback((url) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -273,46 +273,64 @@ export default function useFabricCanvas(canvasElRef) {
     if (!template || !template.photoArea) return
 
     const pa = template.photoArea
+    const targetW = pa.width
+    const targetH = pa.height
 
-    FabricImage.fromURL(url, { crossOrigin: 'anonymous' }).then((img) => {
-      // Calculate scale to fill photo area
-      const targetW = pa.width
-      const targetH = pa.height
-      const scaleX = targetW / img.width
-      const scaleY = targetH / img.height
-      const scale = Math.max(scaleX, scaleY) // cover the area
+    // Use native Image to avoid CORS issues with blob URLs
+    const imgEl = new window.Image()
+    imgEl.onload = () => {
+      // Offscreen canvas: render clipped photo
+      const offCanvas = document.createElement('canvas')
+      offCanvas.width = targetW
+      offCanvas.height = targetH
+      const ctx = offCanvas.getContext('2d')
 
-      img.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: pa.x + targetW / 2,
-        top: pa.y + targetH / 2,
-        originX: 'center',
-        originY: 'center',
-        selectable: true, evented: true,
+      // Apply clip shape
+      ctx.save()
+      if (pa.shape === 'circle') {
+        const r = Math.min(targetW, targetH) / 2
+        ctx.beginPath()
+        ctx.arc(targetW / 2, targetH / 2, r, 0, Math.PI * 2)
+        ctx.clip()
+      } else {
+        const rad = 12
+        ctx.beginPath()
+        ctx.moveTo(rad, 0)
+        ctx.lineTo(targetW - rad, 0)
+        ctx.quadraticCurveTo(targetW, 0, targetW, rad)
+        ctx.lineTo(targetW, targetH - rad)
+        ctx.quadraticCurveTo(targetW, targetH, targetW - rad, targetH)
+        ctx.lineTo(rad, targetH)
+        ctx.quadraticCurveTo(0, targetH, 0, targetH - rad)
+        ctx.lineTo(0, rad)
+        ctx.quadraticCurveTo(0, 0, rad, 0)
+        ctx.closePath()
+        ctx.clip()
+      }
+
+      // Draw image to fill the area (cover mode)
+      const scaleX = targetW / imgEl.width
+      const scaleY = targetH / imgEl.height
+      const scale = Math.max(scaleX, scaleY)
+      const drawW = imgEl.width * scale
+      const drawH = imgEl.height * scale
+      const dx = (targetW - drawW) / 2
+      const dy = (targetH - drawH) / 2
+      ctx.drawImage(imgEl, dx, dy, drawW, drawH)
+      ctx.restore()
+
+      // Create FabricImage from the clipped offscreen canvas
+      const fabImg = new FabricImage(offCanvas, {
+        left: pa.x,
+        top: pa.y,
+        originX: 'left',
+        originY: 'top',
+        selectable: true,
+        evented: true,
         name: 'photo',
       })
 
-      // Create clipPath based on shape
-      let clipPath
-      if (pa.shape === 'circle') {
-        clipPath = new Circle({
-          radius: Math.min(targetW, targetH) / 2,
-          left: pa.x + targetW / 2 - Math.min(targetW, targetH) / 2,
-          top: pa.y + targetH / 2 - Math.min(targetW, targetH) / 2,
-          originX: 'center', originY: 'center',
-        })
-      } else {
-        // roundrect
-        clipPath = new Rect({
-          left: pa.x, top: pa.y,
-          width: targetW, height: targetH,
-          rx: 12, ry: 12,
-        })
-      }
-      img.clipPath = clipPath
-
-      // Add a border circle/rect around photo
+      // Border around photo area
       const borderObj = pa.shape === 'circle'
         ? new Circle({
             radius: Math.min(targetW, targetH) / 2 + (pa.borderWidth || 1),
@@ -342,13 +360,15 @@ export default function useFabricCanvas(canvasElRef) {
         canvas.remove(photoRef.current.img)
         canvas.remove(photoRef.current.border)
       }
-      photoRef.current = { img, border: borderObj }
-      canvas.add(img)
+      photoRef.current = { img: fabImg, border: borderObj }
+      canvas.add(fabImg)
       canvas.add(borderObj)
       canvas.renderAll()
-    }).catch(() => {
-      // silent fail
-    })
+    }
+    imgEl.onerror = () => {
+      console.warn('Foto gagal dimuat')
+    }
+    imgEl.src = url
   }, [])
 
   // Remove photo
